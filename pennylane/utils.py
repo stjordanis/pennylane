@@ -100,3 +100,60 @@ def unflatten(flat, model):
     if len(tail) != 0:
         raise ValueError('Flattened iterable has more elements than the model.')
     return res
+
+
+def cvqnn_circuit_weights(n_layers, n_wires, mean=0., std=0.1):
+    """
+
+    Args:
+        n_layers (int): Number of layers
+        n_wires (int): Number of qubits
+        mean (float): Mean of normal distribution
+        std (float): Standard deviation of normal distribution from which parameters are drawn
+        uniform (array): Draw weights of interferometer from this interval
+
+    Returns: Weight arrays with first dimension being the number of layers
+
+    """
+    n_if = n_wires * (n_wires - 1) // 2
+    theta_1 = 2 * np.pi * np.random.rand(n_layers, n_if)
+    phi_1 = 2 * np.pi * np.random.rand(n_layers, n_if)
+    varphi_1 = 2 * np.pi * np.random.rand(n_layers, n_if)
+    r = np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires))
+    phi_r = 2 * np.pi * np.random.rand(n_layers, n_wires)
+    theta_2 = 2 * np.pi * np.random.rand(n_layers, n_if)
+    phi_2 =  2 * np.pi * np.random.rand(n_layers, n_if)
+    varphi_2 = 2 * np.pi * np.random.rand(n_layers, n_if)
+    a = np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires))
+    phi_a = 2 * np.pi * np.random.rand(n_layers, n_wires)
+    k = np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires))
+
+    return theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k
+
+
+def cvqnn_layer_weights(n_wires, mean=0., std=0.1):
+    """
+
+    Args:
+        n_wires (int): Number of qubits
+        mean (float): Mean of normal distribution
+        std (float): Standard deviation of normal distribution from which parameters are drawn
+        uniform (array): Draw weights of interferometer from this interval
+
+    Returns: Weight arrays for different gates (theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k)
+
+    """
+    n_if = n_wires * (n_wires - 1) // 2
+    theta_1 = 2 * np.pi * np.random.rand(n_if)
+    phi_1 = 2 * np.pi * np.random.rand(n_if)
+    varphi_1 = 2 * np.pi * np.random.rand(n_if)
+    r = np.random.normal(loc=mean, scale=std, size=(n_wires))
+    phi_r = 2 * np.pi * np.random.rand(n_wires)
+    theta_2 = 2 * np.pi * np.random.rand(n_if)
+    phi_2 =  2 * np.pi * np.random.rand(n_if)
+    varphi_2 = 2 * np.pi * np.random.rand(n_if)
+    a = np.random.normal(loc=mean, scale=std, size=(n_wires))
+    phi_a = 2 * np.pi * np.random.rand(n_wires)
+    k = np.random.normal(loc=mean, scale=std, size=(n_wires))
+
+    return theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k

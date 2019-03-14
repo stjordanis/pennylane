@@ -171,7 +171,7 @@ def StronglyEntanglingCircuitBlock(weights, periodic=True, r=1, imprimitive=CNOT
         imprimitive(wires=[wires[i], wires[(i+r) % num_wires]])
 
 
-def CVNeuralNet(weights, wires=None):
+def CVNeuralNetCircuit(theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k, wires=None):
     """pennylane.template.CVNeuralNet(weights, wires)
     A CV Quantum Neural Network
 
@@ -189,8 +189,9 @@ def CVNeuralNet(weights, wires=None):
     Keyword Args:
         wires (Sequence[int]): wires the CVQNN should act on
     """
-    for layer_weights in weights:
-        CVNeuralNetLayer(*layer_weights, wires=wires)
+    for i in range(len(theta_1)):
+        CVNeuralNetLayer(theta_1[i], phi_1[i], varphi_1[i], r[i], phi_r[i], theta_2[i], phi_2[i], varphi_2[i],
+                         a[i], phi_a[i], k[i], wires=wires)
 
 
 def CVNeuralNetLayer(theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k, wires=None):
