@@ -102,8 +102,56 @@ def unflatten(flat, model):
     return res
 
 
+def strongly_entangling_circuit_weights(n_layers, n_wires, mean=0., std=1., uniform=False):
+    """
+    Creates a numpy array of weights for a Strongly Entangling Circuit.
+    The array has the correct shape to use in the function :ref:`REF` and draws each weight
+    from a normal distribution or, if `uniform` is `True`, uniformly from the interval [0, 2*pi].
+
+    Args:
+        n_layers (int): Number of layers
+        n_wires (int): Number of qubits
+        mean (float): Mean of normal distribution
+        std (float): Standard deviation of normal distribution from which parameters are drawn
+        uniform (bool): If true, draw weights from [0, 2*pi]
+
+    Returns: Numpy array of weights with shape (n_layers, n_wires, 3)
+
+    """
+    if uniform:
+        return np.random.randn(n_layers, n_wires, 3)
+    else:
+        return np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires, 3))
+
+
+def strongly_entangling_layer_weights(n_wires, mean=0., std=1., uniform=False):
+    """
+    Creates a numpy array of weights for a layer of the Strongly Entangling Circuit.
+    The array has the correct shape to use in the function :ref:`REF` and draws each weight
+    from a normal distribution or, if `uniform` is `True`, uniformly from the interval [0, 2*pi].
+
+    Args:
+
+        n_wires (int): Number of qubits
+        mean (float): Mean of normal distribution
+        std (float): Standard deviation of normal distribution from which parameters are drawn
+        uniform (bool): If true, draw weights from [0, 2*pi]
+
+    Returns: Numpy array of weights with shape (n_wires, 3).
+
+    """
+    if uniform:
+        return np.random.randn(n_wires, 3)
+    else:
+        return np.random.normal(loc=mean, scale=std, size=(n_wires, 3))
+
+
 def cvqnn_circuit_weights(n_layers, n_wires, mean=0., std=0.1):
     """
+    Creates a numpy array of weights for a Continuous-Variable Quantum Neural Net Circuit.
+    The array has the correct shape to use in the function :ref:`REF` and draws the weight to
+    squeezing, displacement and kerr gates from a normal distribution (specified by `mean` and `std`),
+    and the gates of beam splitters uniformly at random from the interval specified in `uniform`.
 
     Args:
         n_layers (int): Number of layers
@@ -112,48 +160,41 @@ def cvqnn_circuit_weights(n_layers, n_wires, mean=0., std=0.1):
         std (float): Standard deviation of normal distribution from which parameters are drawn
         uniform (array): Draw weights of interferometer from this interval
 
-    Returns: Weight arrays with first dimension being the number of layers
+    Returns: Weights array of shape (n_layers, 7, n_wires), Interferometer weights array of
+             shape (n_layers, 4, n_wires*(n_wires-1)//2)
 
     """
+
+    #TODO: INitialise phases in weights with interval
     n_if = n_wires * (n_wires - 1) // 2
-    theta_1 = 2 * np.pi * np.random.rand(n_layers, n_if)
-    phi_1 = 2 * np.pi * np.random.rand(n_layers, n_if)
-    varphi_1 = 2 * np.pi * np.random.rand(n_layers, n_if)
-    r = np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires))
-    phi_r = 2 * np.pi * np.random.rand(n_layers, n_wires)
-    theta_2 = 2 * np.pi * np.random.rand(n_layers, n_if)
-    phi_2 =  2 * np.pi * np.random.rand(n_layers, n_if)
-    varphi_2 = 2 * np.pi * np.random.rand(n_layers, n_if)
-    a = np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires))
-    phi_a = 2 * np.pi * np.random.rand(n_layers, n_wires)
-    k = np.random.normal(loc=mean, scale=std, size=(n_layers, n_wires))
+    weights = np.random.normal(loc=mean, scale=std, size=(n_layers, 7, n_wires))
+    weights_if = 2 * np.pi * np.random.rand(n_layers, 2, 2, n_if)
 
-    return theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k
+    return weights, weights_if
 
 
-def cvqnn_layer_weights(n_wires, mean=0., std=0.1):
+def cvqnn_layer_weights(n_wires, mean=0., std=1., uniform=False):
     """
+    Creates a numpy array of weights for a layer of the Continuous-Variable Quantum Neural Net Circuit.
+    The array has the correct shape to use in the function :ref:`REF`.
 
     Args:
+
         n_wires (int): Number of qubits
         mean (float): Mean of normal distribution
         std (float): Standard deviation of normal distribution from which parameters are drawn
         uniform (array): Draw weights of interferometer from this interval
 
-    Returns: Weight arrays for different gates (theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k)
+
+    Returns: Weights array of shape (7, n_wires), Interferometer weights array of shape (4, n_wires*(n_wires-1)//2)
 
     """
-    n_if = n_wires * (n_wires - 1) // 2
-    theta_1 = 2 * np.pi * np.random.rand(n_if)
-    phi_1 = 2 * np.pi * np.random.rand(n_if)
-    varphi_1 = 2 * np.pi * np.random.rand(n_if)
-    r = np.random.normal(loc=mean, scale=std, size=(n_wires))
-    phi_r = 2 * np.pi * np.random.rand(n_wires)
-    theta_2 = 2 * np.pi * np.random.rand(n_if)
-    phi_2 =  2 * np.pi * np.random.rand(n_if)
-    varphi_2 = 2 * np.pi * np.random.rand(n_if)
-    a = np.random.normal(loc=mean, scale=std, size=(n_wires))
-    phi_a = 2 * np.pi * np.random.rand(n_wires)
-    k = np.random.normal(loc=mean, scale=std, size=(n_wires))
 
-    return theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k
+    #TODO: INitialise phases in weights with interval
+
+    n_if = n_wires*(n_wires-1)//2
+    weights = np.random.normal(loc=mean, scale=std, size=(7, n_wires))
+    weights_if = 2 * np.pi * np.random.rand(2, 2, n_if)
+    return weights, weights_if
+
+# TODO: Write test

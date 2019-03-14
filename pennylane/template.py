@@ -144,11 +144,11 @@ def StronglyEntanglingCircuit(weights, periodic=True, ranges=None, imprimitive=C
     if ranges is None:
         ranges = [1]*len(weights)
 
-    for block_weights, block_range in zip(weights, ranges):
-        StronglyEntanglingCircuitBlock(block_weights, r=block_range, periodic=periodic, imprimitive=imprimitive, wires=wires)
+    for layer_weights, block_range in zip(weights, ranges):
+        StronglyEntanglingLayer(layer_weights, r=block_range, periodic=periodic, imprimitive=imprimitive, wires=wires)
 
 
-def StronglyEntanglingCircuitBlock(weights, periodic=True, r=1, imprimitive=CNOT, wires=None):
+def StronglyEntanglingLayer(weights, periodic=True, r=1, imprimitive=CNOT, wires=None):
     """pennylane.template.StronglyEntanglingCircuitBlock(weights, periodic=True, r=1, imprimitive=qml.CNOT, wires)
     An individual block of a strongly entangling circuit.
 
@@ -171,7 +171,7 @@ def StronglyEntanglingCircuitBlock(weights, periodic=True, r=1, imprimitive=CNOT
         imprimitive(wires=[wires[i], wires[(i+r) % num_wires]])
 
 
-def CVNeuralNetCircuit(theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k, wires=None):
+def CVNeuralNetCircuit(weights, weights_if, wires=None):
     """pennylane.template.CVNeuralNet(weights, wires)
     A CV Quantum Neural Network
 
@@ -179,23 +179,34 @@ def CVNeuralNetCircuit(theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varph
     :cite:`killoran2018continuous` for an arbitrary number of wires
     and layers.
 
-    See :func:`CVNeuralNetLayer` for details of the expected format of
-    input parameters.
-
     Args:
-        weights (array[array]): array of arrays of weights for each
-            layer of the CV neural network
+        weights (array): Array of shape (n_layers, 7, len(wires)).
+                         For layer l, the parameters are distributed to the following gates:
+                         weights[l, 0] - len(wires) rotations for first interferometer
+                         weights[l, 1] - len(wires) squeezing amplitudes
+                         weights[l, 2] - len(wires) squeezing phases
+                         weights[l, 3] - len(wires) rotations for second interferometer
+                         weights[l, 4] - len(wires) displacement amplitudes
+                         weights[l, 5] - len(wires) displacement phases
+                         weights[l, 6] - len(wires) kerr parameters
+
+        weights_if (array): Array of shape (n_layers, 2, 2, n_if) with n_if = len(wires)*(len(wires)-1)//2.
+                            For layer l, the parameters are distributed to the following gates:
+                             weights_if[l, 0, 0] - n_if transmittivity angles for first interferometer
+                             weights_if[l, 0, 1] - n_if phase angles for first interferometer
+                             weights_if[l, 1, 0] - n_if transmittivity angles for second interferometer
+                             weights_if[l, 1, 1] - n_if phase angles for second interferometer
 
     Keyword Args:
         wires (Sequence[int]): wires the CVQNN should act on
     """
-    for i in range(len(theta_1)):
-        CVNeuralNetLayer(theta_1[i], phi_1[i], varphi_1[i], r[i], phi_r[i], theta_2[i], phi_2[i], varphi_2[i],
-                         a[i], phi_a[i], k[i], wires=wires)
+
+    for layer_w, layer_w_if in zip(weights, weights_if):
+        CVNeuralNetLayer(weights=layer_w, weights_if=layer_w_if, wires=wires)
 
 
-def CVNeuralNetLayer(theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_2, a, phi_a, k, wires=None):
-    """pennylane.template.CVNeuralNetLayer(theta_1, phi_1, s, theta_2, phi_2, r, k, wires)
+def CVNeuralNetLayer(weights, weights_if, wires=None):
+    """pennylane.template.CVNeuralNetLayer(weights, weights_if, wires=None)
     A single layer of a CV Quantum Neural Network
 
     Implements a single layer from the the CV Quantum Neural Network (CVQNN)
@@ -208,30 +219,39 @@ def CVNeuralNetLayer(theta_1, phi_1, varphi_1, r, phi_r, theta_2, phi_2, varphi_
        device of the `PennyLane-SF <https://github.com/XanaduAI/pennylane-sf>`_ plugin.
 
     Args:
-        theta_1 (array[float]): length :math:`N(N-1)/2` array of transmittivity angles for first interferometer
-        phi_1 (array[float]): length :math:`N(N-1)/2` array of phase angles for first interferometer
-        r (array[float]): length :math:`N` arrays of squeezing amounts for :class:`~.Squeezing` operations
-        phi_r (array[float]): length :math:`N` arrays of squeezing angles for :class:`~.Squeezing` operations
-        theta_2 (array[float]): length :math:`N(N-1)/2` array of transmittivity angles for second interferometer
-        phi_2 (array[float]): length :math:`N(N-1)/2` array of phase angles for second interferometer
-        a (array[float]): length :math:`N` arrays of displacement magnitudes for :class:`~.Displacement` operations
-        phi_a (array[float]): length :math:`N` arrays of displacement angles for :class:`~.Displacement` operations
-        k (array[float]): length :math:`N` arrays of kerr parameters for :class:`~.Kerr` operations
+        weights (array): Array of shape (7, len(wires)). The parameters are distributed to the following gates:
+                         The parameters in weights[i] are distributed to the following gates:
+                         weights[0] - len(wires) rotations for first interferometer
+                         weights[1] - len(wires) squeezing amplitudes
+                         weights[2] - len(wires) squeezing phases
+                         weights[3] - len(wires) rotations for second interferometer
+                         weights[4] - len(wires) displacement amplitudes
+                         weights[5] - len(wires) displacement phases
+                         weights[6] - len(wires) kerr parameters
+
+
+        weights_if (array): Array of shape (2, 2, n_if) with n_if =  len(wires)*(len(wires)-1)//2 .
+                            The parameters are distributed to the following gates:
+                             weights_if[0, 0] - n_if transmittivity angles for first interferometer
+                             weights_if[0, 1] - n_if phase angles for first interferometer
+                             weights_if[1, 0] - n_if transmittivity angles for second interferometer
+                             weights_if[1, 1] - n_if phase angles for second interferometer
 
     Keyword Args:
         wires (Sequence[int]): wires the layer should act on
     """
-    Interferometer(theta=theta_1, phi=phi_1, varphi=varphi_1, wires=wires)
-    for i, wire in enumerate(wires):
-        Squeezing(r[i], phi_r[i], wires=wire)
 
-    Interferometer(theta=theta_2, phi=phi_2, varphi=varphi_2, wires=wires)
-
+    Interferometer(theta=weights_if[0, 0], phi=weights_if[0, 1], varphi=weights[0], wires=wires)
     for i, wire in enumerate(wires):
-        Displacement(a[i], phi_a[i], wires=wire)
+        Squeezing(weights[1, i], weights[2, i], wires=wire)
+
+    Interferometer(theta=weights_if[1, 0], phi=weights_if[1, 1], varphi=weights[3], wires=wires)
 
     for i, wire in enumerate(wires):
-        Kerr(k[i], wires=wire)
+        Displacement(weights[4, i], weights[5, i], wires=wire)
+
+    for i, wire in enumerate(wires):
+        Kerr(weights[6, i], wires=wire)
 
 
 def Interferometer(theta, phi, varphi, wires=None, mesh='rectangular', beamsplitter='pennylane'):
@@ -254,7 +274,7 @@ def Interferometer(theta, phi, varphi, wires=None, mesh='rectangular', beamsplit
     * ``mesh='rectangular'`` (default): uses the scheme described in
       :cite:`clements2016optimal`, resulting in a *rectangular* array of
       :math:`N(N-1)/2` beamsplitters arranged in :math:`N` layers and numbered from left
-      to right and top to bottom in each layer. The first beamsplitters acts on
+      to right and top to bottom in each layer. The first beamsplitter acts on
       wires :math:`0` and :math:`1`.
 
       .. figure:: ../_static/clements.png
@@ -361,3 +381,6 @@ def Interferometer(theta, phi, varphi, wires=None, mesh='rectangular', beamsplit
     # apply the final local phase shifts to all modes
     for i, p in enumerate(varphi):
         Rotation(p, wires=[w[i]])
+
+
+
